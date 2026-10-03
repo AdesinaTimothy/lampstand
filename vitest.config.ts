@@ -7,7 +7,7 @@ const alias = {
   "server-only": path.resolve(__dirname, "tests/stubs/empty.ts"),
 };
 
-const testEnv = {
+const testEnv: Partial<NodeJS.ProcessEnv> = {
   NODE_ENV: "test",
   DATABASE_URL: process.env.TEST_DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5432/lampstand_test?schema=public",
   APP_SECRET: "test-secret-that-is-long-enough",
@@ -35,7 +35,6 @@ export default defineConfig({
           env: testEnv,
           globalSetup: ["tests/integration/global-setup.ts"],
           // One shared database: run files serially.
-          fileParallelism: false,
           pool: "forks",
           poolOptions: { forks: { singleFork: true } },
           testTimeout: 30_000,

@@ -12,7 +12,6 @@ import {
   Download,
   ExternalLink,
   Eye,
-  FileText,
   ListTree,
   Paperclip,
 } from "lucide-react";
@@ -179,24 +178,18 @@ export function PlayerShell({ data }: { data: PlayerData }) {
             ) : lesson.type === "PDF" && lesson.media ? (
               <div className="px-0 lg:px-6 lg:pt-6">
                 <div className="mx-auto max-w-5xl">
-                  <object
-                    data={lesson.media.url}
-                    type="application/pdf"
+                  <iframe
+                    src={lesson.media.url}
+                    title={`${lesson.title} (PDF document)`}
                     className="h-[70dvh] w-full border-y border-border bg-surface-muted lg:rounded-xl lg:border"
-                    aria-label={lesson.title}
-                  >
-                    <div className="grid h-full place-items-center p-8 text-center">
-                      <div>
-                        <FileText className="mx-auto size-10 text-muted-foreground" aria-hidden />
-                        <p className="mt-3 font-medium">This document can&apos;t be shown inline on your device.</p>
-                        <Button asChild className="mt-4">
-                          <a href={lesson.media.downloadUrl}>
-                            <Download aria-hidden /> Download PDF
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
-                  </object>
+                  />
+                  <p className="px-4 pt-2 text-xs text-muted-foreground lg:px-0">
+                    Document not showing?{" "}
+                    <a href={lesson.media.downloadUrl} className="font-medium text-primary underline-offset-2 hover:underline">
+                      Download the PDF
+                    </a>
+                    .
+                  </p>
                 </div>
               </div>
             ) : null}

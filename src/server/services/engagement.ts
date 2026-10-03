@@ -1,6 +1,7 @@
 import "server-only";
 import { AppError, forbidden, notFound } from "@/lib/errors";
 import { db } from "../db";
+import { audit } from "../audit";
 import type { Viewer } from "../auth/viewer";
 import { assertCan, canManageCourse } from "../authz/policies";
 import { recordActivity } from "./activity";
@@ -112,12 +113,14 @@ export async function setReviewHidden(viewer: Viewer, reviewId: string, hidden: 
   assertCan(viewer, "review:moderate");
   const review = await db.review.findFirst({
     where: { id: reviewId, course: { organizationId: viewer.organizationId } },
-    select: { courseId: true },
+    select: { courseId: true, hidden: true },
   });
   if (!review) throw notFound("Review");
+  if (review.hidden === hidden) return;
   await db.$transaction(async (tx) => {
     await tx.review.update({ where: { id: reviewId }, data: { hidden } });
     await refreshRating(tx, review.courseId);
+    await audit(viewer, hidden ? "review.hidden" : "review.shown", { type: "Review", id: reviewId }, { courseId: review.courseId }, tx);
   });
 }
 

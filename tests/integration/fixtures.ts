@@ -15,6 +15,7 @@ export async function resetDatabase() {
 export async function createOrg() {
   return db.organization.create({
     data: { name: "Test Church", slug: "test-church", requireEmailVerification: true, certificateSignatoryName: "Pastor Test", certificateSignatoryTitle: "Lead Pastor" },
+    include: { logo: { select: { id: true } } },
   });
 }
 

@@ -326,3 +326,53 @@ export async function saveAssignment(viewer: Viewer, lessonId: string, input: z.
   };
   await db.assignment.upsert({ where: { lessonId }, create: { lessonId, ...data }, update: data });
 }
+
+// ───────────────────────────── Focused lesson updates ─────────────────────────────
+// Used by the lesson editor so autosave and media uploads never overwrite
+// unrelated fields the instructor is still editing.
+
+export async function updateLessonBasics(
+  viewer: Viewer,
+  lessonId: string,
+  input: { title: string; summary: string; isPreview: boolean; isRequired: boolean },
+) {
+  await assertCanManageLesson(viewer, lessonId);
+  await db.lesson.update({
+    where: { id: lessonId },
+    data: { title: input.title, summary: input.summary || null, isPreview: input.isPreview, isRequired: input.isRequired },
+  });
+}
+
+/** Saves the body of a reading lesson (or notes for other types) and refreshes its reading time. */
+export async function updateLessonContent(viewer: Viewer, lessonId: string, html: string) {
+  await assertCanManageLesson(viewer, lessonId);
+  const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { type: true } });
+  const content = sanitizeRichText(html);
+  await db.lesson.update({
+    where: { id: lessonId },
+    data: {
+      content: content || null,
+      ...(lesson.type === "TEXT" ? { durationSeconds: content ? readingSeconds(content) : null } : {}),
+    },
+  });
+  return { durationSeconds: lesson.type === "TEXT" && content ? readingSeconds(content) : null };
+}
+
+/** Attaches (or clears) the primary media of a video, audio or PDF lesson. */
+export async function setLessonMedia(viewer: Viewer, lessonId: string, mediaId: string | null) {
+  await assertCanManageLesson(viewer, lessonId);
+  const lesson = await db.lesson.findUniqueOrThrow({ where: { id: lessonId }, select: { type: true } });
+  const expectedKind = lesson.type === "VIDEO" ? "VIDEO" : lesson.type === "AUDIO" ? "AUDIO" : lesson.type === "PDF" ? "DOCUMENT" : null;
+  if (!expectedKind) throw new AppError("VALIDATION", "This lesson type doesn't have a media file.");
+  let durationSeconds: number | null = null;
+  if (mediaId) {
+    const asset = await db.mediaAsset.findFirst({
+      where: { id: mediaId, organizationId: viewer.organizationId, kind: expectedKind },
+      select: { durationSeconds: true },
+    });
+    if (!asset) throw new AppError("VALIDATION", "That file doesn't match this lesson type. Please upload it again.");
+    durationSeconds = expectedKind === "DOCUMENT" ? null : asset.durationSeconds;
+  }
+  await db.lesson.update({ where: { id: lessonId }, data: { mediaId, durationSeconds } });
+  return { durationSeconds };
+}

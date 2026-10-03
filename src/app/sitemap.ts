@@ -4,7 +4,7 @@ import { env } from "@/server/env";
 import { getCurrentOrganization } from "@/server/organization";
 import { publishedWhere } from "@/server/queries/catalog";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.APP_URL.replace(/\/$/, "");

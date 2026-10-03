@@ -63,3 +63,23 @@ export const profileSchema = z.object({
   profileVisibility: z.enum(["PUBLIC", "MEMBERS", "PRIVATE"]),
   emailNotifications: z.boolean(),
 });
+
+export const revokeCertificateSchema = z.object({
+  certificateId: z.string().min(1).max(40),
+  reason: z.string().trim().min(5, "Give a short reason (at least 5 characters)").max(300),
+});
+
+export const reviewVisibilitySchema = z.object({
+  reviewId: z.string().min(1).max(40),
+  hidden: z.boolean(),
+});
+
+export const courseFeaturedSchema = z.object({
+  courseId: z.string().min(1).max(40),
+  featured: z.boolean(),
+});
+
+export const courseStatusActionSchema = z.object({
+  courseId: z.string().min(1).max(40),
+  action: z.enum(["publish", "unpublish", "archive"]),
+});

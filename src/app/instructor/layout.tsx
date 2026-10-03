@@ -4,8 +4,8 @@ import { ConsoleShell, type ConsoleNavGroup } from "@/components/layout/console-
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { UserMenu } from "@/components/layout/user-menu";
 import { requireInstructorPage } from "@/server/auth/guards";
-import { db } from "@/server/db";
 import { getShellData } from "@/server/queries/shell";
+import { countPendingSubmissions } from "@/server/queries/instructor";
 
 export const metadata: Metadata = { title: { default: "Instructor studio", template: "%s · Instructor studio" }, robots: { index: false } };
 
@@ -13,9 +13,7 @@ export default async function InstructorLayout({ children }: { children: React.R
   const viewer = await requireInstructorPage("/instructor");
   const [{ org, viewer: menuViewer, unread }, pendingReviews] = await Promise.all([
     getShellData(),
-    db.assignmentSubmission.count({
-      where: { status: "SUBMITTED", assignment: { lesson: { deletedAt: null, course: { instructors: { some: { userId: viewer.id } } } } } },
-    }),
+    countPendingSubmissions(viewer),
   ]);
   const groups: ConsoleNavGroup[] = [
     {

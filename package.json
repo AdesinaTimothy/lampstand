@@ -6,7 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma migrate reset --force",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "playwright test",
+    "postinstall": "prisma generate",
+    "maintenance": "tsx --conditions=react-server scripts/maintenance.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1146.0",
@@ -67,5 +77,8 @@
     "tsx": "^4",
     "typescript": "^5",
     "vitest": "^3.2.4"
+  },
+  "prisma": {
+    "seed": "tsx --conditions=react-server prisma/seed.ts"
   }
 }

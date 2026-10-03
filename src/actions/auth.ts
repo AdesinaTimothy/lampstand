@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { AppError, type ActionResult } from "@/lib/errors";
+import type { ActionResult } from "@/lib/errors";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -26,7 +26,7 @@ async function clientKey(scope: string, extra = "") {
 export async function registerAction(input: unknown): Promise<ActionResult<{ needsVerification: boolean; email: string }>> {
   return runAction(async () => {
     const data = parse(registerSchema, input);
-    await enforceRateLimit(await clientKey("register"), 5, 60 * 60);
+    await enforceRateLimit(await clientKey("register"), 30, 60 * 60); // sign-up evenings share one IP
     const org = await getCurrentOrganization();
     const user = await auth.registerUser(data, org);
     if (user.emailVerifiedAt) {
@@ -43,7 +43,9 @@ export async function loginAction(
   return runAction(async () => {
     const data = parse(loginSchema, input);
     // Per-IP and per-account limits slow down both spraying and targeted guessing.
-    await enforceRateLimit(await clientKey("login"), 20, 15 * 60);
+    // The per-IP limit is generous because a whole congregation may share one
+    // church Wi-Fi address on a Sunday; the per-account limit does the real work.
+    await enforceRateLimit(await clientKey("login"), 100, 15 * 60);
     await enforceRateLimit(`login-account:${data.email}`, 10, 15 * 60);
     const org = await getCurrentOrganization();
     const result = await auth.authenticate(data.email, data.password, org);
@@ -92,16 +94,12 @@ export async function changePasswordAction(input: unknown): Promise<ActionResult
   }, "Password updated. Other devices have been signed out.");
 }
 
-/** Used by the verify-email page (GET link → consumes token server-side). */
-export async function verifyEmailToken(token: string): Promise<{ ok: boolean; message: string }> {
-  try {
-    if (!token || token.length < 20) throw new AppError("UNPROCESSABLE", "This link is invalid.");
-    const userId = await auth.verifyEmail(token);
+/** Called from the verify-email page's confirm button (POST, not the GET link). */
+export async function confirmEmailAction(token: unknown): Promise<ActionResult> {
+  return runAction(async () => {
+    const value = parse(resetPasswordSchema.shape.token, token);
+    await enforceRateLimit(await clientKey("verify-email"), 20, 15 * 60);
+    const userId = await auth.verifyEmail(value);
     await createSession(userId);
-    return { ok: true, message: "Your email is confirmed." };
-  } catch (error) {
-    if (error instanceof AppError) return { ok: false, message: error.message };
-    console.error(error);
-    return { ok: false, message: "We couldn't verify your email. Please try again." };
-  }
+  });
 }
