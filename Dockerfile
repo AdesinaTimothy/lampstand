@@ -19,6 +19,7 @@ FROM base AS run
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
 RUN useradd --system --uid 1001 lampstand
 COPY --from=build --chown=lampstand /app ./
-USER lampstand
+COPY --chmod=755 scripts/docker-entrypoint.sh /usr/local/bin/lampstand-entrypoint
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start -- -p ${PORT}"]
+ENTRYPOINT ["lampstand-entrypoint"]
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$SEED_DEMO_IF_EMPTY\" = \"true\" ]; then npx tsx --conditions=react-server scripts/seed-if-empty.ts; fi && npm run start -- -p ${PORT}"]
