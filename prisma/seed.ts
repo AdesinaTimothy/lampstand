@@ -6,7 +6,7 @@
 // rebuilds a realistic, internally consistent dataset. Content lives in
 // prisma/seed/content; the learning simulation lives in prisma/seed/learning.ts.
 import "./seed/load-env";
-import { rm } from "node:fs/promises";
+import { readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { ACHIEVEMENTS, type AchievementCode } from "@/lib/achievements";
@@ -58,7 +58,12 @@ async function reset() {
   if (storage.name === "local") {
     // Every asset row is about to be deleted, so nothing in local storage is referenced any more.
     const root = path.resolve(env.STORAGE_LOCAL_DIR);
-    if (root !== path.resolve("/") && root !== process.cwd()) await rm(root, { recursive: true, force: true });
+    // Empty the folder rather than removing it: in the container its parent (/app)
+    // belongs to root, so the app user can clear the storage folder but not delete it.
+    if (root !== path.resolve("/") && root !== process.cwd()) {
+      const entries = await readdir(root).catch(() => [] as string[]);
+      for (const entry of entries) await rm(path.join(root, entry), { recursive: true, force: true });
+    }
   }
   const tables = await db.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename <> '_prisma_migrations'`;

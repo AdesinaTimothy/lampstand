@@ -11,7 +11,13 @@ if [ "$SEED_DEMO_IF_EMPTY" = "true" ]; then
     status=0
     node node_modules/tsx/dist/cli.mjs --conditions=react-server scripts/seed-if-empty.ts || status=$?
     if [ "$status" = "3" ]; then
-      node node_modules/tsx/dist/cli.mjs --conditions=react-server prisma/seed.ts
+      if node node_modules/tsx/dist/cli.mjs --conditions=react-server prisma/seed.ts; then
+        echo "start: demo seed finished"
+      else
+        echo "start: demo seed FAILED (see the error above)" >&2
+      fi
+    elif [ "$status" != "0" ]; then
+      echo "start: seed check FAILED with status $status" >&2
     fi
   ) &
 fi
