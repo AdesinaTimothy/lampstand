@@ -33,4 +33,4 @@ services:
 databases:
   - name: lampstand-db
     plan: basic-256mb
-   postgresMajorVersion: "16"
+    postgresMajorVersion: "16"
