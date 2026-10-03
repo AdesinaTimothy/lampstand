@@ -1,7 +1,8 @@
-// Seeds the demo church when the database has no organization yet, or when the
-// demo media files are gone (free hosting has no persistent disk, so uploads
+// Decides whether to seed the demo church: when the database has no organization
+// yet, or when the demo media files are gone (free hosting has no persistent disk, so uploads
 // vanish on restart). An existing deployment with its files intact is never wiped.
-import { execSync } from "node:child_process";
+// Exits with code 3 when a seed is needed; scripts/start.sh then runs it, so no
+// extra Node process stays alive alongside the seed on small hosts.
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
@@ -22,7 +23,7 @@ async function main() {
     return;
   }
   console.log(mediaMissing ? "seed-if-empty: demo media missing, reseeding" : "seed-if-empty: empty database, seeding demo church");
-  execSync("npm run db:seed", { stdio: "inherit" });
+  process.exitCode = 3;
 }
 
 main().catch((error) => {
