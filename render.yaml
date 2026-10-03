@@ -1,17 +1,14 @@
-# One-click demo on Render: Dashboard > New > Blueprint, then pick this repository.
-# Creates the app (Docker), a PostgreSQL database and a disk for uploaded files.
+# One-click demo on Render (free plans): Dashboard > New > Blueprint, then pick this repository.
+# Creates the app (Docker) and a PostgreSQL database. The free plan has no persistent disk,
+# so uploaded files live in /app/storage and are lost on each restart or deploy.
 # The first boot seeds the Grace Harbor demo church because SEED_DEMO_IF_EMPTY is true.
 # Set it to false (and change APP_ORGANIZATION_SLUG) before using this for a real church.
 services:
   - type: web
     name: lampstand
     runtime: docker
-    plan: starter
+    plan: free
     healthCheckPath: /api/health
-    disk:
-      name: uploads
-      mountPath: /var/lampstand/storage
-      sizeGB: 5
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -24,7 +21,7 @@ services:
       - key: STORAGE_DRIVER
         value: local
       - key: STORAGE_LOCAL_DIR
-        value: /var/lampstand/storage
+        value: /app/storage
       - key: MAIL_DRIVER
         value: log
       - key: SEED_DEMO_IF_EMPTY
@@ -32,5 +29,5 @@ services:
 
 databases:
   - name: lampstand-db
-    plan: basic-256mb
+    plan: free
     postgresMajorVersion: "16"
