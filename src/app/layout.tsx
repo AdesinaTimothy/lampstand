@@ -5,6 +5,10 @@ import { Providers } from "@/components/providers";
 import { ThemeScript } from "@/components/theme-script";
 import "./globals.css";
 
+// Every page reads the church from the database, so render at request time
+// (this also keeps `next build` from needing a live database).
+export const dynamic = "force-dynamic";
+
 const appUrl = process.env.APP_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
