@@ -13,7 +13,7 @@ import {
 import { parse, runAction } from "@/server/action";
 import { requireViewer } from "@/server/auth/guards";
 import { enrollInCourse, leaveCourse } from "@/server/services/enrollment";
-import { markLessonComplete } from "@/server/services/progress";
+import { markLessonComplete, recordLessonView } from "@/server/services/progress";
 import { submitQuizAttempt, type QuizSubmissionResult } from "@/server/services/quiz";
 import { submitAssignment } from "@/server/services/assignments";
 import * as engagement from "@/server/services/engagement";
@@ -39,6 +39,14 @@ export async function leaveCourseAction(courseId: unknown): Promise<ActionResult
     revalidatePath("/my-courses");
     revalidatePath("/dashboard");
   }, "You've left the course. Your progress is saved if you return.");
+}
+
+/** Fired by the player on mount (not during render, so link prefetching never counts as a view). */
+export async function recordLessonViewAction(lessonId: unknown): Promise<ActionResult> {
+  return runAction(async () => {
+    const viewer = await requireViewer();
+    await recordLessonView(viewer, parse(idSchema, lessonId));
+  });
 }
 
 export async function completeLessonAction(

@@ -22,7 +22,7 @@ export type CourseCardData = {
   enrollment: { status: "ACTIVE" | "COMPLETED"; progressPercent: number } | null;
 };
 
-const cardSelect = {
+export const cardSelect = {
   id: true,
   slug: true,
   title: true,

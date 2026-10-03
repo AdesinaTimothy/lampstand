@@ -25,10 +25,10 @@ const STREAK_TYPES: ActivityType[] = [
   "COURSE_COMPLETED",
 ];
 
-export type StreakSummary = { current: number; longest: number; activeToday: boolean; days: string[] };
+export type StreakSummary = { current: number; longest: number; activeToday: boolean; days: string[]; today: string };
 
 /** Pure streak computation over sorted-desc ISO dates (YYYY-MM-DD). Exported for tests. */
-export function computeStreak(daysDesc: string[], today: string): Omit<StreakSummary, "days"> {
+export function computeStreak(daysDesc: string[], today: string): Omit<StreakSummary, "days" | "today"> {
   const toDay = (s: string) => Math.round(Date.parse(`${s}T00:00:00Z`) / 86_400_000);
   const todayN = toDay(today);
   const set = new Set(daysDesc.map(toDay));
@@ -64,5 +64,5 @@ export async function getStreak(userId: string, timezone: string): Promise<Strea
   const [{ today }] = await db.$queryRaw<{ today: string }[]>`
     SELECT to_char(now() AT TIME ZONE ${timezone}, 'YYYY-MM-DD') AS today`;
   const days = rows.map((r) => r.day);
-  return { ...computeStreak(days, today), days };
+  return { ...computeStreak(days, today), days, today };
 }

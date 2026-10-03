@@ -6,6 +6,7 @@ import { db, type Tx } from "../db";
 import { env } from "../env";
 import { audit } from "../audit";
 import type { Viewer } from "../auth/viewer";
+import { assertCan } from "../authz/policies";
 
 // Crockford base32 without ambiguous characters (no I, L, O, U).
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -17,8 +18,9 @@ export function generateCertificateCode(): string {
 }
 
 export function normalizeCertificateCode(input: string): string {
-  const raw = input.toUpperCase().replace(/[^0-9A-Z]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
-  const body = raw.startsWith("LS") ? raw.slice(2) : raw;
+  const compact = input.toUpperCase().replace(/[^0-9A-Z]/g, "");
+  // Strip the prefix before mapping look-alikes, or the "L" in "LS" becomes "1".
+  const body = (compact.startsWith("LS") && compact.length === 12 ? compact.slice(2) : compact).replace(/O/g, "0").replace(/[IL]/g, "1");
   if (body.length !== 10) return input.trim().toUpperCase();
   return `LS-${body.slice(0, 4)}-${body.slice(4, 8)}-${body.slice(8, 10)}`;
 }
@@ -136,6 +138,7 @@ export async function logVerification(code: string, meta: { ipAddress: string | 
 }
 
 export async function revokeCertificate(viewer: Viewer, certificateId: string, reason: string) {
+  assertCan(viewer, "certificate:manage");
   const cert = await db.certificate.findFirst({
     where: { id: certificateId, course: { organizationId: viewer.organizationId } },
     select: { id: true, revokedAt: true, code: true },

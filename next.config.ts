@@ -22,6 +22,8 @@ const csp = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@node-rs/argon2", "sharp"],
+  // Certificate PDFs read bundled fonts at runtime.
+  outputFileTracingIncludes: { "/certificates/[id]/pdf": ["./src/server/certificates/fonts/**"] },
   images: {
     localPatterns: [{ pathname: "/api/media/**" }],
     formats: ["image/avif", "image/webp"],

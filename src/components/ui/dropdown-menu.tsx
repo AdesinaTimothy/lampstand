@@ -10,9 +10,16 @@ export const DropdownMenuTrigger = M.Trigger;
 export const DropdownMenuGroup = M.Group;
 export const DropdownMenuRadioGroup = M.RadioGroup;
 
-export function DropdownMenuContent({ className, sideOffset = 6, align = "end", ...props }: React.ComponentProps<typeof M.Content>) {
+export function DropdownMenuContent({
+  className,
+  sideOffset = 6,
+  align = "end",
+  container,
+  ...props
+}: React.ComponentProps<typeof M.Content> & { container?: HTMLElement | null }) {
+  // `container` keeps menus visible inside a fullscreen element (e.g. the video player).
   return (
-    <M.Portal>
+    <M.Portal container={container ?? undefined}>
       <M.Content
         sideOffset={sideOffset}
         align={align}

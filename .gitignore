@@ -48,3 +48,7 @@ next-env.d.ts
 /coverage
 .env
 .env.test
+
+# test artefacts
+/.test-storage
+.smoke*.mjs
